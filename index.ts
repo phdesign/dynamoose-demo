@@ -11,11 +11,19 @@ type Consumer = Item & {
 
 // Declare the model, type and schema. The table name defaults to the model name.
 // The schema can be defined sparately or inline.
-const ConsumerModel = dynamoose.model<Consumer>("Consumer", {
-  id: String,
-  email: String,
-  cloudentityID: String,
-})
+const ConsumerModel = dynamoose.model<Consumer>(
+  "Consumer",
+  new dynamoose.Schema(
+    {
+      id: String,
+      email: String,
+      cloudentityID: String,
+    },
+    {
+      saveUnknown: true,
+    }
+  )
+)
 
 async function main() {
   // Create a new instance of the model.
@@ -23,6 +31,8 @@ async function main() {
     id: uuidv4(),
     email: "paul+dynamoose@eql.com",
     cloudentityID: uuidv4().replace("-", ""),
+    firstName: "Paul",
+    lastName: "Dynamoose",
   })
 
   // Calling save will create a new item in the table.
