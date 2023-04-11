@@ -1,4 +1,5 @@
 import * as dynamoose from "dynamoose"
+import { ObjectType } from "dynamoose/dist/General"
 import { type Item } from "dynamoose/dist/Item"
 
 dynamoose.logger().then((logger) => logger.providers.set(console))
@@ -40,18 +41,18 @@ const ConsumerModel = dynamoose.model<Consumer>(
 
 async function main() {
   // Get all consumers.
-  const consumers = await ConsumerModel.scan()
-    .attributes(["id", "email", "cloudentityID", "firstName", "lastName"])
-    .exec()
+  const consumers = []
+  let lastKey: ObjectType | undefined = undefined
+  do {
+    let scan = ConsumerModel.scan().attributes(["id", "email"]).limit(10)
+    if (lastKey) {
+      scan = scan.startAt(lastKey)
+    }
+    const result = await scan.exec()
+    lastKey = result.lastKey
+    consumers.push(...result)
+  } while (lastKey)
   console.log(`Found ${consumers.length} consumers`)
-
-  // Get consumer by email GSI.
-  const consumersByEmail = await ConsumerModel.query("email")
-    .eq("paul+dynamoose@eql.com")
-    .using("emailGSI")
-    .exec()
-  console.log(`Query returned ${consumersByEmail.length} consumers`)
-  consumersByEmail.forEach((c) => console.log(`${c.id} - ${c.email}`))
 }
 
 main()
