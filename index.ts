@@ -1,6 +1,5 @@
 import * as dynamoose from "dynamoose"
 import { type Item } from "dynamoose/dist/Item"
-import { v4 as uuidv4 } from "uuid"
 
 // Optional: define a type for the model
 type Consumer = Item & {
@@ -26,19 +25,22 @@ const ConsumerModel = dynamoose.model<Consumer>(
 )
 
 async function main() {
-  // Create a new instance of the model.
-  const consumer = new ConsumerModel({
-    id: uuidv4(),
-    email: "paul+dynamoose@eql.com",
-    cloudentityID: uuidv4().replace("-", ""),
-    firstName: "Paul",
-    lastName: "Dynamoose",
-  })
+  // Get all consumers
+  const consumers = await ConsumerModel.scan().exec()
+  console.log(`Found ${consumers.length} consumers`)
+  consumers.forEach((c) => console.log(`${c.id} - ${c.email}`))
 
-  // Calling save will create a new item in the table.
-  // Dynamoose will create the table if it doesn't exist!
-  await consumer.save()
-  console.log(`Saved consumer ${consumer.id}`)
+  // Filter consumers by property
+  const filteredConsumers = await ConsumerModel.scan("email")
+    .eq("paul+dynamoose@eql.com")
+    .exec()
+  console.log(`Filtered ${filteredConsumers.length} consumers by email`)
+  filteredConsumers.forEach((c) => console.log(`${c.id} - ${c.email}`))
+
+  // Get a single consumer by partition key
+  const consumer = await ConsumerModel.get(consumers[0].id)
+  console.log("Found consumer by id")
+  console.log(`${consumer.id} - ${consumer.email}`)
 }
 
 main()
