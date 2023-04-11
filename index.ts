@@ -1,6 +1,11 @@
 import * as dynamoose from "dynamoose"
 import { type Item } from "dynamoose/dist/Item"
 
+// We never want Dynamoose to create tables.
+dynamoose.Table.defaults.set({
+  create: false,
+})
+
 // Optional: define a type for the model
 type Consumer = Item & {
   id: string
@@ -25,6 +30,9 @@ const ConsumerModel = dynamoose.model<Consumer>(
 )
 
 async function main() {
+  // Register Model with a table name.
+  new dynamoose.Table("route66-dev-paulh-Consumer", [ConsumerModel])
+
   // Get all consumers
   const consumers = await ConsumerModel.scan().exec()
   console.log(`Found ${consumers.length} consumers`)
