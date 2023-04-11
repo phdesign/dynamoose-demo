@@ -1,5 +1,4 @@
 import * as dynamoose from "dynamoose"
-import { ObjectType } from "dynamoose/dist/General"
 import { type Item } from "dynamoose/dist/Item"
 
 dynamoose.logger().then((logger) => logger.providers.set(console))
@@ -41,17 +40,11 @@ const ConsumerModel = dynamoose.model<Consumer>(
 
 async function main() {
   // Get all consumers.
-  const consumers = []
-  let lastKey: ObjectType | undefined = undefined
-  do {
-    let scan = ConsumerModel.scan().attributes(["id", "email"]).limit(10)
-    if (lastKey) {
-      scan = scan.startAt(lastKey)
-    }
-    const result = await scan.exec()
-    lastKey = result.lastKey
-    consumers.push(...result)
-  } while (lastKey)
+  const consumers = await ConsumerModel.scan()
+    .attributes(["id", "email"])
+    .limit(10)
+    .all()
+    .exec()
   console.log(`Found ${consumers.length} consumers`)
 }
 
