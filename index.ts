@@ -21,7 +21,12 @@ const ConsumerModel = dynamoose.model<Consumer>(
   new dynamoose.Schema(
     {
       id: String,
-      email: String,
+      email: {
+        type: String,
+        index: {
+          name: "emailGSI",
+        },
+      },
       cloudentityID: String,
     },
     {
@@ -31,22 +36,17 @@ const ConsumerModel = dynamoose.model<Consumer>(
 )
 
 async function main() {
-  // Get all consumers
+  // Get all consumers.
   const consumers = await ConsumerModel.scan().exec()
   console.log(`Found ${consumers.length} consumers`)
-  consumers.forEach((c) => console.log(`${c.id} - ${c.email}`))
 
-  // Filter consumers by property
-  const filteredConsumers = await ConsumerModel.scan("email")
+  // Get consumer by email GSI.
+  const consumersByEmail = await ConsumerModel.query("email")
     .eq("paul+dynamoose@eql.com")
+    .using("emailGSI")
     .exec()
-  console.log(`Filtered ${filteredConsumers.length} consumers by email`)
-  filteredConsumers.forEach((c) => console.log(`${c.id} - ${c.email}`))
-
-  // Get a single consumer by partition key
-  const consumer = await ConsumerModel.get(consumers[0].id)
-  console.log("Found consumer by id")
-  console.log(`${consumer.id} - ${consumer.email}`)
+  console.log(`Query returned ${consumersByEmail.length} consumers`)
+  consumersByEmail.forEach((c) => console.log(`${c.id} - ${c.email}`))
 }
 
 main()
