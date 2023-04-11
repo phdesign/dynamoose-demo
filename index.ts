@@ -1,10 +1,13 @@
 import * as dynamoose from "dynamoose"
 import { type Item } from "dynamoose/dist/Item"
 
+dynamoose.logger().then((logger) => logger.providers.set(console))
+
 // We never want Dynamoose to create tables.
 dynamoose.Table.defaults.set({
   create: false,
   prefix: "route66-dev-paulh-",
+  waitForActive: false,
 })
 
 // Optional: define a type for the model
@@ -37,7 +40,9 @@ const ConsumerModel = dynamoose.model<Consumer>(
 
 async function main() {
   // Get all consumers.
-  const consumers = await ConsumerModel.scan().exec()
+  const consumers = await ConsumerModel.scan()
+    .attributes(["id", "email", "cloudentityID", "firstName", "lastName"])
+    .exec()
   console.log(`Found ${consumers.length} consumers`)
 
   // Get consumer by email GSI.
